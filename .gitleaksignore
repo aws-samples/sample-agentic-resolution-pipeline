@@ -1,0 +1,22 @@
+# Intentional test credentials used to demonstrate the MCP server's redaction layer.
+# These are AWS's official example keys and fake tokens — not real secrets.
+6f4bef5f84233131f4290801f27a737538be058c:intake/jira/TEST_PROMPTS.md:aws-access-token:128
+6f4bef5f84233131f4290801f27a737538be058c:intake/jira/TEST_PROMPTS.md:github-pat:129
+6f4bef5f84233131f4290801f27a737538be058c:intake/jira/local-dev/WALKTHROUGH.md:aws-access-token:66
+6f4bef5f84233131f4290801f27a737538be058c:intake/jira/local-dev/payloads/04_create_issue.json:aws-access-token:11
+6f4bef5f84233131f4290801f27a737538be058c:intake/jira/INTEGRATION_RECORD.md:aws-access-token:170
+
+# Test fixtures for guardrail validation — intentionally contain patterns the guardrail should detect.
+5d26c31db7c30b0723b1738293ddc8b0e68862ae:orchestrator/tests/test_guardrails.py:aws-access-token:96
+5d26c31db7c30b0723b1738293ddc8b0e68862ae:orchestrator/tests/test_guardrails.py:aws-access-token:157
+
+# Guardrail word filter definition — contains the pattern "-----BEGIN RSA PRIVATE KEY-----"
+# as a denied word to detect in agent output. Not an actual key.
+5d26c31db7c30b0723b1738293ddc8b0e68862ae:infrastructure/stacks/guardrails_stack.py:private-key:99
+
+# Secrets Manager ARN references (not actual secrets, just resource identifiers)
+36a34c53109f63f48cc61268064e94a447dbcb6e:infrastructure/stacks/orchestrator_stack.py:generic-api-key:337
+cb33d2c26f35ec6dba2f1fd19148b633bcacb02f:infrastructure/stacks/orchestrator_stack.py:generic-api-key:286
+
+# Checkov rule ID "CKV_SECRET_2" in .checkov.yaml (config, not a credential)
+c72a3188ea1ac9f231344be5f22155f3b383e080:.checkov.yaml:aws-access-token:4

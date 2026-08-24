@@ -1,0 +1,80 @@
+%%{ init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#232F3E', 'primaryTextColor': '#fff', 'lineColor': '#FF9900' } } }%%
+sequenceDiagram
+    autonumber
+    participant Human as Engineer<br/>(Jira UI)
+    participant Jira as Jira Cloud
+    participant APIGW as API Gateway<br/>(/prod/webhook)
+    participant WH as Webhook Receiver<br/>(Lambda)
+    participant SM as Secrets Manager
+    participant DDB as DynamoDB<br/>(Dedupe Table)
+    participant Agent as DevOps Agent<br/>(Event Channel)
+    participant MCP as Jira MCP Server
+    participant Audit as CloudWatch<br/>Audit Log
+
+    Note over Human, Agent: TRIGGER PATH — Bug created in Jira → Autonomous Agent Investigation
+
+    Human->>+Jira: Create Bug: "Payment 503s for APAC"<br/>Project: KAN, Priority: High
+    Jira->>Jira: Fire configured webhook
+
+    Jira->>+APIGW: POST /prod/webhook<br/>X-Hub-Signature: sha256=<hmac><br/>Body: {webhookEvent, issue, user, ...}
+    APIGW->>+WH: Invoke Lambda
+
+    %% HMAC verification
+    WH->>+SM: get_secret_value(JiraWebhookSecretArn)
+    SM-->>-WH: {secret: "..."}
+    WH->>WH: HMAC-SHA256 verify<br/>(constant-time compare)
+
+    %% Self-loop guardrail
+    WH->>WH: _is_agent_authored(payload)?
+    Note right of WH: Check user.accountId<br/>∉ JIRA_AGENT_ACCOUNT_IDS<br/>and comment body<br/>doesn't start with "[Agent]"
+    WH->>WH: Result: false (human-authored)
+
+    %% Normalize
+    WH->>WH: _normalize(payload)
+    Note right of WH: Maps Jira event →<br/>Agent event schema:<br/>{eventType, incidentId,<br/> priority, title, service,<br/> data.metadata.source="jira",<br/> data.metadata.issue_key="KAN-6"}
+
+    %% Filter
+    WH->>WH: _filter_match(event)?
+    Note right of WH: Evaluates JIRA_WEBHOOK_FILTER<br/>(e.g. "project=KAN AND<br/>priority in (P1,P2,High,Highest)")
+    WH->>WH: Result: true (matches)
+
+    %% Dedupe
+    WH->>+DDB: put_item(dedupe_key, expires_at)<br/>ConditionExpression: attribute_not_exists
+    DDB-->>-WH: Success (first time seen)
+
+    %% Forward to agent
+    WH->>+SM: get_secret_value(AgentWebhookSecretArn)
+    SM-->>-WH: {secret: "..."}
+    WH->>WH: Sign: HMAC-SHA256(timestamp:payload)
+
+    WH->>+Agent: POST https://event-ai.../webhook/generic/...<br/>x-amzn-event-timestamp: ...<br/>x-amzn-event-signature: ...<br/>Body: normalized event
+    Agent-->>-WH: 200 OK (accepted)
+
+    WH->>Audit: [AUDIT] {event:"forwarded", issue_key:"KAN-6", priority:"HIGH"}
+    WH-->>-APIGW: 200 {status: "forwarded"}
+    APIGW-->>-Jira: 200
+
+    Note over Agent: Agent picks up event,<br/>loads jira-bug-triage-writeback skill,<br/>begins autonomous investigation
+
+    %% Agent investigation and write-back
+    Agent->>Agent: Investigate using CW, X-Ray,<br/>Grafana, GitHub, custom MCP...
+
+    Agent->>+MCP: tools/call: add_comment<br/>{issue_key:"KAN-6", body:"[Agent] Investigation..."}
+    MCP->>MCP: Redact → Policy → Jira call
+    MCP->>+Jira: POST /issue/KAN-6/comment
+    Jira-->>-MCP: 201 Created
+    MCP-->>-Agent: {status:"added", comment_id:"10043"}
+
+    Note over Jira, WH: Jira fires webhook for agent's comment...
+
+    Jira->>+APIGW: POST /prod/webhook (comment_created)
+    APIGW->>+WH: Invoke Lambda
+    WH->>WH: HMAC verify → OK
+    WH->>WH: _is_agent_authored()?
+    Note right of WH: comment.author.accountId<br/>∈ JIRA_AGENT_ACCOUNT_IDS<br/>OR body starts with "[Agent]"
+    WH->>WH: Result: TRUE → DROP
+    WH->>Audit: [AUDIT] {event:"self_loop_drop", issue_key:"KAN-6"}
+    WH-->>-APIGW: 200 {status: "self-loop dropped"}
+    APIGW-->>-Jira: 200
+
+    Note over Human: Engineer wakes up to a fully<br/>triaged ticket with RCA comment.<br/>No re-trigger loop. No duplicates.

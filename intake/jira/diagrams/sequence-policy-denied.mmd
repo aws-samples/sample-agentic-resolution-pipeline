@@ -1,0 +1,35 @@
+%%{ init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#232F3E', 'primaryTextColor': '#fff', 'lineColor': '#FF9900' } } }%%
+sequenceDiagram
+    autonumber
+    participant Agent as DevOps Agent
+    participant APIGW as API Gateway<br/>(SigV4 Auth)
+    participant Server as MCP Server<br/>(Lambda)
+    participant CB as Circuit Breaker
+    participant Policy as Policy Engine
+    participant Jira as Jira Cloud
+    participant Audit as CloudWatch<br/>Audit Log
+
+    Note over Agent, Jira: POLICY DENIED PATH — Agent tries a forbidden action
+
+    Agent->>+APIGW: POST /prod/mcp<br/>{"method":"tools/call","params":{"name":"update_issue",<br/>"arguments":{"issue_key":"KAN-1","fields":{"security_level":"Internal"}}}}
+    APIGW->>+Server: Invoke Lambda
+
+    Server->>CB: is_open()?
+    CB-->>Server: false
+
+    %% Policy check FAILS
+    Server->>+Policy: check_field_writes("KAN", {"security_level": "Internal"})
+    Policy->>Policy: Load policy.yaml
+    Policy->>Policy: "security_level" ∈ forbidden_fields?
+    Note right of Policy: YES — field is<br/>explicitly forbidden<br/>for project KAN
+    Policy-->>-Server: THROW PolicyDenied<br/>("field 'security_level' is forbidden in project KAN")
+
+    Note over Server, Jira: Jira is NEVER called.<br/>Denial happens before<br/>any external request.
+
+    %% Audit the denial
+    Server->>Audit: [AUDIT] {"event":"policy_denied",<br/>"tool":"update_issue",<br/>"reason":"field 'security_level' is forbidden in project KAN"}
+
+    Server-->>-APIGW: {"jsonrpc":"2.0","result":{"content":[{<br/>"type":"text",<br/>"text":"{\"error\":\"POLICY_DENIED\",\"message\":\"...\"}"<br/>}]}}
+    APIGW-->>-Agent: 200 OK
+
+    Note over Agent: Agent receives structured error.<br/>Reports denial to user gracefully.<br/>No retry needed — this is a hard policy constraint.

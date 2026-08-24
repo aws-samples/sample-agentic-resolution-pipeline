@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "transition_issue",
+    "arguments": {
+      "issue_key": "OPS-101",
+      "transition_id": "21",
+      "transition_name": "In Review",
+      "comment": "PR ready for review."
+    }
+  }
+}

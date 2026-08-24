@@ -1,0 +1,2 @@
+skip-path:
+  - intake/jira/local-dev/payloads/04_create_issue.json

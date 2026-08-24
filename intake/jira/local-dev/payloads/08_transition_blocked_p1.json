@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "transition_issue",
+    "arguments": {
+      "issue_key": "OPS-100",
+      "transition_id": "41",
+      "transition_name": "Resolve",
+      "comment": "Looks fixed."
+    }
+  }
+}

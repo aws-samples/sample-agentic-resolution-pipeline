@@ -1,0 +1,6 @@
+{
+  "vpc_id": "vpc-0123456789abcdef0",
+  "devops_agent_webhook_url": "https://event-ai.us-east-1.api.aws/webhook/generic/your-webhook-id",
+  "jira_api_secret_arn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:JiraApiSecret-xxxxxx",
+  "jira_base_url": "https://your-org.atlassian.net"
+}

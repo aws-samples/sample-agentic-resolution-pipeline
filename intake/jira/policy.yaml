@@ -1,0 +1,96 @@
+# Jira MCP — write policy
+#
+# Per-project rules enforced BEFORE any write hits Jira. A denial returns an MCP
+# error and is NOT recorded in the idempotency table, so a corrected retry can
+# succeed. Add a project block by key; "default" applies to projects with no
+# explicit block.
+
+version: 1
+
+defaults:
+  # Fields the agent is allowed to set on create/update.
+  allowed_fields:
+    - summary
+    - description
+    - issuetype
+    - labels
+    - components
+    - assignee
+    - reporter
+    - priority
+    - duedate
+    - parent
+
+  # Fields the agent must NEVER touch. Wins over allowed_fields.
+  forbidden_fields:
+    - security        # security level — only humans
+    - votes
+    - watches
+
+  # Workflow transitions the agent may perform. Match by transition NAME (not id).
+  allowed_transitions:
+    - "Start Progress"
+    - "In Review"
+    - "Ready for QA"
+    - "Reopen"
+
+  # Transitions explicitly denied even if listed above.
+  forbidden_transitions:
+    - "Close"
+    - "Resolve"
+    - "Done"
+
+  # Hard rules that override allowlists.
+  rules:
+    # Never let the agent close a P1/P0 ticket.
+    never_auto_close_high_priority: true
+
+    # Require a comment when transitioning to a terminal state (Done/Closed/Resolved).
+    require_comment_on_terminal_transition: true
+
+    # Cap on bulk operations per call.
+    max_bulk_operations: 50
+
+# Per-project overrides. Keyed by Jira project key.
+projects:
+  KAN:
+    # Personal sandbox project — Pattern B (forward-only).
+    # "Done" is intentionally NOT in the allowlist so we can demonstrate a
+    # POLICY_DENIED on the terminal transition. Edit to add "Done" if you
+    # want to allow agent-driven completion.
+    allowed_transitions:
+      - "To Do"
+      - "In Progress"
+    forbidden_transitions: []  # override defaults — KAN doesn't have Resolve/Close
+    rules:
+      never_auto_close_high_priority: true
+      require_comment_on_terminal_transition: true
+      max_bulk_operations: 25
+
+  OPS:
+    # Operations team's project — agent has broader latitude here.
+    allowed_transitions:
+      - "Start Progress"
+      - "In Review"
+      - "Ready for QA"
+      - "Reopen"
+      - "Acknowledge"
+    rules:
+      never_auto_close_high_priority: true
+      require_comment_on_terminal_transition: true
+      max_bulk_operations: 100
+
+  SEC:
+    # Security project — much more restrictive.
+    allowed_fields:
+      - description    # only allow appending context
+      - labels
+    forbidden_fields:
+      - security
+      - assignee       # security incidents must be assigned by humans
+      - priority
+    allowed_transitions: []  # no agent-driven transitions
+    rules:
+      never_auto_close_high_priority: true
+      require_comment_on_terminal_transition: true
+      max_bulk_operations: 0  # bulk forbidden in this project

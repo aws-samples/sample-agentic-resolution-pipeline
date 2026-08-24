@@ -1,0 +1,21 @@
+{
+  "name": "geofence-service",
+  "version": "1.0.0",
+  "description": "IoT Fleet Management - Geofence Service: boundary definitions and real-time location checks",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --coverage",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "4.18.2",
+    "aws-sdk": "2.1692.0",
+    "uuid": "9.0.1",
+    "winston": "3.11.0"
+  },
+  "devDependencies": {
+    "jest": "29.7.0",
+    "nodemon": "3.0.3"
+  }
+}

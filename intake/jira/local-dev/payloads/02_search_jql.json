@@ -1,0 +1,9 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "search_issues_jql",
+    "arguments": {"jql": "project = OPS AND priority in (P1,P2)"}
+  }
+}

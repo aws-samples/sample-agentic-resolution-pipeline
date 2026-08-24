@@ -1,0 +1,60 @@
+%%{ init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#232F3E', 'primaryTextColor': '#fff', 'lineColor': '#FF9900' } } }%%
+sequenceDiagram
+    autonumber
+    participant Agent as DevOps Agent
+    participant APIGW as API Gateway<br/>(SigV4 Auth)
+    participant Server as MCP Server<br/>(Lambda)
+    participant CB as Circuit Breaker
+    participant Idem as Idempotency<br/>(DynamoDB)
+    participant Policy as Policy Engine
+    participant Redact as Redaction
+    participant Jira as Jira Cloud<br/>(REST v3)
+    participant SM as Secrets Manager
+    participant Audit as CloudWatch<br/>Audit Log
+
+    Note over Agent, Jira: WRITE PATH — e.g. add_comment with secrets in body
+
+    Agent->>+APIGW: POST /prod/mcp (SigV4 signed)<br/>{"method":"tools/call","params":{"name":"add_comment",...}}
+    APIGW->>APIGW: Verify IAM SigV4 signature
+    APIGW->>+Server: Invoke Lambda (pass actor ARN)
+
+    %% Circuit breaker check
+    Server->>CB: is_open()?
+    CB-->>Server: false (closed)
+
+    %% Idempotency lookup
+    Server->>+Idem: lookup(idempotency_key)
+    Idem->>Idem: DynamoDB get_item
+    Idem-->>-Server: None (cache miss)
+
+    %% Policy check
+    Server->>+Policy: check_field_writes(project_key, fields)
+    Policy->>Policy: Load policy.yaml<br/>Resolve project rules
+    Policy-->>-Server: OK (no forbidden fields)
+
+    %% Redaction
+    Server->>+Redact: redact_adf(body_adf)
+    Redact->>Redact: Regex scan:<br/>AWS keys, emails, tokens, JWTs...
+    Note right of Redact: "oncall@acme.com" →<br/>"[REDACTED:email]"<br/>"AKIA..." →<br/>"[REDACTED:aws_access_key]"
+    Redact-->>-Server: Sanitized ADF
+
+    %% Jira call
+    Server->>+Jira: POST /rest/api/3/issue/{key}/comment<br/>(Basic auth, sanitized body)
+    Note over SM, Jira: Credentials loaded once<br/>per cold start from<br/>Secrets Manager
+    Jira-->>-Server: 201 {id: "10042", ...}
+
+    %% Circuit breaker success
+    Server->>CB: record_success()
+
+    %% Idempotency record
+    Server->>+Idem: record(idempotency_key, response)
+    Idem->>Idem: DynamoDB put_item<br/>(ConditionExpression: attribute_not_exists)
+    Idem-->>-Server: Recorded (TTL: 24h)
+
+    %% Audit
+    Server->>Audit: [AUDIT] {"event":"tool_ok","tool":"add_comment",...}
+
+    Server-->>-APIGW: {"jsonrpc":"2.0","result":{"content":[...]}}
+    APIGW-->>-Agent: 200 OK + Mcp-Session-Id header
+
+    Note over Agent: Agent sees success.<br/>Has NO knowledge that<br/>body was redacted.

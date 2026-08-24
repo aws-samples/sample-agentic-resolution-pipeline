@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "method": "tools/call",
+  "params": {
+    "name": "link_issues",
+    "arguments": {
+      "inward_key": "OPS-100",
+      "outward_key": "OPS-101",
+      "link_type": "Relates"
+    }
+  }
+}

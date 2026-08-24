@@ -1,0 +1,486 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" pages="4">
+  <diagram id="page_1" name="1. End-to-end (overview)">
+    <mxGraphModel dx="1849" dy="855" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p1_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1A1A1A;" value="Jira and DevOps Agent — End-to-End Architecture (Lambda + API Gateway, SigV4, DynamoDB idempotency)" vertex="1">
+          <mxGeometry height="40" width="1660" x="20" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_g_jira" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fillColor=#F4F8FC;strokeColor=#7E9DC2;fontStyle=1;fontColor=#1A2C42;fontSize=12;" value="Jira Cloud (external)" vertex="1">
+          <mxGeometry height="980" width="380" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_g_aws" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fillColor=#FFF8EE;strokeColor=#D89A2A;fontStyle=1;fontColor=#5C3F0F;fontSize=12;" value="AWS account — Jira MCP integration" vertex="1">
+          <mxGeometry height="980" width="900" x="440" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_g_agent" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontStyle=1;fontColor=#2A1F5C;fontSize=12;" value="DevOps Agent runtime (Bedrock / AgentCore / equivalent)" vertex="1">
+          <mxGeometry height="980" width="320" x="1360" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_jira_rest" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" value="Jira REST v3 API" vertex="1">
+          <mxGeometry height="60" width="220" x="120" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_jira_wh" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" value="Jira webhooks issue_created / updated / commented / transitioned" vertex="1">
+          <mxGeometry height="80" width="260" x="100" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_jira_user" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" value="Jira service account &quot;DevOps Agent&quot; — API token" vertex="1">
+          <mxGeometry height="80" width="260" x="100" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_apigw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E0;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;" value="API Gateway (REST) IAM auth (SigV4) + per-route throttling" vertex="1">
+          <mxGeometry height="80" width="280" x="900" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_apigw_wh" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E0;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;" value="API Gateway (webhook) HMAC verify (Jira shared secret)" vertex="1">
+          <mxGeometry height="80" width="280" x="500" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_mcp_lambda" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;strokeWidth=2;" value="MCP Server Lambda JSON-RPC handler 15 tools (8 read, 7 write) tools/list · tools/call · resources/list" vertex="1">
+          <mxGeometry height="120" width="280" x="900" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_wh_lambda" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;strokeWidth=2;" value="Webhook Receiver Lambda HMAC verify · normalize · POST to agent webhook" vertex="1">
+          <mxGeometry height="80" width="280" x="900" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_policy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" value="Policy Engine (in-process) policy.yaml field/transition allowlist · never auto-close P1 · comment-required-before-close" vertex="1">
+          <mxGeometry height="100" width="320" x="500" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_redact" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" value="Secret Redactor (in-process) AWS keys · tokens · passwords · emails" vertex="1">
+          <mxGeometry height="60" width="320" x="500" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_cb" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" value="Circuit Breaker (in-process) fail-fast on Jira 5xx" vertex="1">
+          <mxGeometry height="60" width="320" x="500" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_ddb_idem" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;" value="DynamoDB IdempotencyKeys PK = idem_key TTL = 24h" vertex="1">
+          <mxGeometry height="80" width="280" x="900" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_ddb_cache" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;" value="DynamoDB MetadataCache project schema · transitions · custom fields TTL = 1h" vertex="1">
+          <mxGeometry height="80" width="280" x="900" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_sm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;" value="Secrets Manager Jira API token (rotated)" vertex="1">
+          <mxGeometry height="80" width="280" x="500" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_cw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;" value="CloudWatch Logs structured audit log: actor · tool · params · idem_key · jira_response" vertex="1">
+          <mxGeometry height="80" width="280" x="900" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_agent_orch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontColor=#2A1F5C;fontSize=12;fontStyle=1;" value="Orchestrator / Resolution Agent" vertex="1">
+          <mxGeometry height="80" width="240" x="1400" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_agent_role" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontColor=#2A1F5C;fontSize=11;" value="IAM role allows execute-api:Invoke on MCP API Gateway" vertex="1">
+          <mxGeometry height="80" width="240" x="1400" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_agent_wh" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontColor=#2A1F5C;fontSize=12;" value="Agent webhook endpoint (incoming events trigger investigation)" vertex="1">
+          <mxGeometry height="80" width="240" x="1400" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_agent_apigw" edge="1" parent="1" source="p1_agent_orch" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_apigw" value="HTTPS + SigV4 (IAM)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_apigw_mcp" edge="1" parent="1" source="p1_apigw" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;" target="p1_mcp_lambda" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_policy" edge="1" parent="1" source="p1_mcp_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_policy" value="enforce">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_redact" edge="1" parent="1" source="p1_mcp_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;" target="p1_redact" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_cb" edge="1" parent="1" source="p1_mcp_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;" target="p1_cb" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_idem" edge="1" parent="1" source="p1_mcp_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_ddb_idem" value="check / write">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_cache" edge="1" parent="1" source="p1_mcp_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_ddb_cache" value="read-through">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_sm" edge="1" parent="1" source="p1_mcp_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_sm" value="GetSecretValue (cached in memory)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_cb_jira" edge="1" parent="1" source="p1_cb" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_jira_rest" value="HTTPS + Basic (email:token) Jira REST v3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_mcp_audit" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1120" y="410" as="sourcePoint" />
+            <mxPoint x="1120" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1_e_jira_wh_apigw" edge="1" parent="1" source="p1_jira_wh" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_apigw_wh" value="HTTPS + HMAC signature header">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_apigw_wh_lambda" edge="1" parent="1" source="p1_apigw_wh" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;" target="p1_wh_lambda" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_wh_agent" edge="1" parent="1" source="p1_wh_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#555;fontSize=11;labelBackgroundColor=#FFFFFF;" target="p1_agent_wh" value="POST normalized event (signed)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_e_wh_audit" edge="1" parent="1" source="p1_wh_lambda" style="endArrow=classic;html=1;rounded=0;strokeColor=#777;fontSize=11;dashed=1;" target="p1_cw" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_legend" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#555555;" value="Legend: blue = external · orange = AWS compute/edge · green = AWS data/observability · red = in-process safety layer · purple = agent runtime" vertex="1">
+          <mxGeometry height="30" width="1640" x="40" y="1060" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page_2" name="2. Write-path (sequence)">
+    <mxGraphModel dx="1171" dy="752" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p2_title" value="Page 2 — Write-path sequence (e.g. createIssue / addComment / transitionIssue)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1A1A1A;" parent="1" vertex="1">
+          <mxGeometry x="20" y="10" width="1460" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_agent" value="DevOps Agent" style="swimlane;html=1;startSize=30;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontColor=#2A1F5C;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="70" width="180" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_apigw" value="API Gateway (IAM auth)" style="swimlane;html=1;startSize=30;fillColor=#FFF4E0;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="70" width="180" height="900" as="geometry">
+            <mxRectangle x="240" y="70" width="170" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2_lane_mcp" value="MCP Lambda" style="swimlane;html=1;startSize=30;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="440" y="70" width="200" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_idem" value="DDB Idempotency" style="swimlane;html=1;startSize=30;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="660" y="70" width="180" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_policy" value="Policy + Redact" style="swimlane;html=1;startSize=30;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="860" y="70" width="180" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_sm" value="Secrets Manager" style="swimlane;html=1;startSize=30;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="70" width="160" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_jira" value="Jira Cloud" style="swimlane;html=1;startSize=30;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1240" y="70" width="180" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_lane_audit" value="CloudWatch Audit" style="swimlane;html=1;startSize=30;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1440" y="70" width="180" height="900" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s1" value="1. tools/call createIssue + X-Idempotency-Key" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="60" y="120" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s2" value="2. SigV4 verify accept / reject" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="260" y="120" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s3" value="3. Lookup idem_key" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="460" y="120" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s4" value="4. miss → continue (hit → return cached)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="680" y="120" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s5" value="5. Policy check field allowlist · transition allowlist · never auto-close P1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="860" y="200" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s6" value="6. Redact secrets in body" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="860" y="300" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s7" value="7. Get Jira token (cached in mem)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="300" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s8" value="8. POST /rest/api/3/issue (with retry + circuit breaker)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1240" y="380" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s9" value="9. Issue created → key + URL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="460" y="500" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s10" value="10. Write {idem_key → response} TTL = 24h" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="680" y="500" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s11" value="11. Emit audit event {actor, tool, params, idem_key, jira_response}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1440" y="600" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_s12" value="12. tools/call result {issue_key, url}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#888;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="60" y="700" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e1" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s1" target="p2_s2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e2" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s2" target="p2_s3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e3" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s3" target="p2_s4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e4" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s4" target="p2_s5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e5" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s5" target="p2_s6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e6" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s6" target="p2_s7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e7" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s7" target="p2_s8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e8" value="201 Created" style="endArrow=classic;html=1;strokeColor=#555;labelBackgroundColor=#FFFFFF;fontSize=11;" parent="1" source="p2_s8" target="p2_s9" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e9" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s9" target="p2_s10" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e10" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s10" target="p2_s11" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_e11" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p2_s11" target="p2_s12" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_reject_note" value="If policy denies → return MCP error before Jira call. Audit logged with denial reason. Idempotency NOT recorded (so a corrected retry can succeed)." style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#999;fontColor=#444;dashed=1;fontSize=11;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="60" y="800" width="780" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_cb_note" value="If circuit breaker open → return DEGRADED_UPSTREAM error. Agent falls back (queue / Slack / retry-later). No Jira call attempted." style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#999;fontColor=#444;dashed=1;fontSize=11;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="60" y="870" width="780" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page_3" name="3. Webhook ingress">
+    <mxGraphModel dx="1171" dy="752" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p3_title" value="Page 3 — Jira webhook to Agent (HMAC verify, normalize, JQL filter, fan-out)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1A1A1A;" parent="1" vertex="1">
+          <mxGeometry x="20" y="10" width="1360" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_jira_evt" value="Jira Cloud event issue_created · issue_updated · comment_created · transitioned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="120" width="280" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_apigw_wh" value="API Gateway /webhook/jira HMAC verify (Jira shared secret) + replay-window check" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E0;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="380" y="120" width="320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_wh_lambda" value="Webhook Receiver Lambda" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=12;fontStyle=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="740" y="130" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_filter" value="JQL filter (config) e.g. project=OPS AND priority in (P1,P2) drop everything else" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="380" y="260" width="320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_normalize" value="Normalize to IssueEvent {source: jira, event_type, issue_key, project, priority, assignee, labels, summary, ...}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="740" y="260" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_dedupe" value="Dedupe by (issue_key, event_type, change_id) DDB short-TTL" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1100" y="260" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_post_agent" value="POST agent webhook signed (HMAC) idempotent · retried" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontColor=#2A1F5C;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="740" y="420" width="320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_dlq" value="DLQ (SQS) failed deliveries → retry with backoff" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1100" y="420" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_agent" value="Agent runtime (orchestrator / triage)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#6A4FBE;fontColor=#2A1F5C;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="740" y="560" width="320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_audit" value="CloudWatch audit log every event in / dropped / forwarded" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="380" y="560" width="320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_jira_apigw" value="POST + X-Hub-Signature" style="endArrow=classic;html=1;strokeColor=#555;labelBackgroundColor=#FFFFFF;fontSize=11;" parent="1" source="p3_jira_evt" target="p3_apigw_wh" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_apigw_wh" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p3_apigw_wh" target="p3_wh_lambda" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_wh_filter" value="evaluate" style="endArrow=classic;html=1;strokeColor=#555;labelBackgroundColor=#FFFFFF;fontSize=11;" parent="1" source="p3_wh_lambda" target="p3_filter" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_filter_norm" value="match" style="endArrow=classic;html=1;strokeColor=#555;labelBackgroundColor=#FFFFFF;fontSize=11;" parent="1" source="p3_filter" target="p3_normalize" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_norm_dedupe" value="check" style="endArrow=classic;html=1;strokeColor=#555;labelBackgroundColor=#FFFFFF;fontSize=11;" parent="1" source="p3_normalize" target="p3_dedupe" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_norm_post" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p3_normalize" target="p3_post_agent" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_post_agent" value="" style="endArrow=classic;html=1;strokeColor=#555;" parent="1" source="p3_post_agent" target="p3_agent" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_post_dlq" value="on failure" style="endArrow=classic;html=1;strokeColor=#777;dashed=1;labelBackgroundColor=#FFFFFF;fontSize=11;" parent="1" source="p3_post_agent" target="p3_dlq" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_e_wh_audit" value="" style="endArrow=classic;html=1;strokeColor=#777;dashed=1;" parent="1" source="p3_wh_lambda" target="p3_audit" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3_reject" value="HMAC fail or replay → 401 + audit. Filter miss → 200 + audit (drop). Dedupe hit → 200 + audit (no fan-out)." style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#999;fontColor=#444;dashed=1;fontSize=11;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="60" y="700" width="640" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page_4" name="4. Use-case to tools">
+    <mxGraphModel dx="1623" dy="752" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p4_title" value="Page 4 — Use-cases mapped to tool calls (which paths exercise which tools)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#1A1A1A;" parent="1" vertex="1">
+          <mxGeometry x="20" y="10" width="1460" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_g_uc" value="Use cases (from JIRA_USE_CASES.md)" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fillColor=#F4F8FC;strokeColor=#7E9DC2;fontStyle=1;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="80" width="500" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_g_tools" value="Tools (15 total)" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fillColor=#FFF8EE;strokeColor=#D89A2A;fontStyle=1;fontColor=#5C3F0F;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="600" y="80" width="380" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_g_safe" value="Safety layers each write call passes through" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fillColor=#FCF1F0;strokeColor=#D69990;fontStyle=1;fontColor=#5A1A14;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="80" width="420" height="780" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc1" value="1. RCA follow-up tickets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="130" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc2" value="2. Bug tickets from agent findings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="200" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc3" value="3. Historical context during investigation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="270" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc4" value="4. Linking deploys and tickets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="340" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc5" value="5. Enriching existing tickets (webhook-triggered)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="410" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc6" value="6. SLA / staleness sweeps (cron)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="480" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc7" value="7. KB ingestion of issues + comments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="550" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc8" value="8. Close-the-loop after PR opens (Libera-style)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="620" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc9" value="9. Read context for resolution agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="690" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_uc10" value="10. Diagnostic upload (logs / flame graphs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FB;strokeColor=#3E7BBF;fontColor=#1A2C42;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="60" y="760" width="460" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_create" value="create_issue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="130" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_update" value="update_issue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="130" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_trans" value="transition_issue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="190" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_comment" value="add_comment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="190" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_link" value="link_issues" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="250" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_attach" value="add_attachment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="250" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_bulk" value="bulk_transition / bulk_update" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE9CF;strokeColor=#D89A2A;fontColor=#5C3F0F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="310" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_search" value="search_issues_jql" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="380" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_get" value="get_issue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="380" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_getc" value="get_issue_comments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="440" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_getcl" value="get_issue_changelog" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="440" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_gett" value="get_transitions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="500" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_meta" value="get_project_metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="500" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_atts" value="get_attachments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="620" y="560" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_t_user" value="get_user" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F4EA;strokeColor=#3E8E5A;fontColor=#1F4730;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="800" y="560" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_legend_t" value="orange = write tools (7) green = read tools (8)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#555;" parent="1" vertex="1">
+          <mxGeometry x="620" y="800" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_idem" value="Idempotency check (DDB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="130" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_policy" value="Policy engine (field/transition allowlist)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="190" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_redact" value="Secret redactor (regex)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="250" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_rate" value="Rate limiter (per-project token bucket)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="310" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_cb" value="Circuit breaker (Jira 5xx fail-fast)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="370" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_audit" value="Audit log (CloudWatch structured)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="430" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_iam" value="IAM SigV4 (API Gateway edge)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE8E6;strokeColor=#C5443B;fontColor=#5A1A14;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="490" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_sf_note" value="Read tools skip idempotency + redaction (no body to redact, GETs are naturally idempotent). Read tools still pass through IAM, rate limiter, circuit breaker, audit." style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#999;fontColor=#444;dashed=1;fontSize=11;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="560" width="380" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e1" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc1" target="p4_t_create" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e1b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc1" target="p4_t_link" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e2" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc2" target="p4_t_create" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e2b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc2" target="p4_t_attach" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e3" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc3" target="p4_t_search" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e3b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc3" target="p4_t_getc" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e4" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc4" target="p4_t_comment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e4b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc4" target="p4_t_trans" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e5" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc5" target="p4_t_get" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e5b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc5" target="p4_t_comment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e6" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc6" target="p4_t_search" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e6b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc6" target="p4_t_getcl" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e6c" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc6" target="p4_t_bulk" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e7" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc7" target="p4_t_search" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e7b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc7" target="p4_t_getc" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e8" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc8" target="p4_t_comment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e8b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc8" target="p4_t_trans" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e9" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc9" target="p4_t_get" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e9b" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc9" target="p4_t_meta" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e10" value="" style="endArrow=classic;html=1;strokeColor=#888;" parent="1" source="p4_uc10" target="p4_t_attach" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

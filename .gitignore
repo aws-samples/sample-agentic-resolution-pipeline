@@ -1,0 +1,65 @@
+# Virtual environment
+.venv/
+
+# Node modules
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# CDK
+infrastructure/cdk.out/
+infrastructure/cdk.out.*/
+infrastructure/cdk.context.json
+_build/
+intake/_build/
+orchestrator/_build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Test/cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local-only docs (never push to remote)
+docs/local/
+docs/ProbeScan*
+docs/ARCHITECTURE.md
+docs/ARCHITECTURE_DECISIONS.md
+docs/DEPLOYMENT_ISSUES.md
+docs/RESOLUTION_AGENT_DEPLOYMENT.md
+docs/RESOLUTION_AGENT_DESIGN.md
+docs/architecture.drawio
+docs/architecture.png
+
+# Repo config (contains account-specific repo URLs and secret ARNs)
+orchestrator/repo-config.yaml
+planner/agentcore/repo-config.yaml
+
+# Intake session/credential/internal files (local only)
+intake/jira/INTEGRATION_RECORD.md
+intake/jira/AGENT_SPACE_PROMPT.md
+intake/jira/AGENT_SPACE_SKILLS.md
+intake/jira/AUDIT_EVIDENCE.md
+intake/jira/CONCEPTS.md
+intake/jira/SESSION_LOG.md
+intake/jira/SETUP_GUIDE.md
+intake/jira/local-dev/TEST_PROMPTS.md
+intake/jira/local-dev/WALKTHROUGH.md
+
+
+# Memory (Claude Code auto-memory, local only)
+memory/
+

@@ -1,0 +1,91 @@
+# Repository Configuration — maps Jira project + component to source repos.
+#
+# The Resolution Agent uses this to know which repo to clone and fix.
+# Matching priority: project+component (exact) → project-only → defaults.
+#
+# For production use, consider replacing the ConfigFileResolver with a
+# dynamic resolver backed by your service catalog (Backstage, ServiceNow,
+# AWS AppRegistry, or DynamoDB).
+
+mappings:
+  # ── Example: multi-repo setup ──────────────────────────────────────────
+  - project: CHECKOUT
+    component: order-service
+    repo: https://github.com/acme/checkout-service
+    branch: main
+    path: src/order
+    provider: github
+
+  - project: CHECKOUT
+    component: payment-gateway
+    repo: https://github.com/acme/payment-service
+    branch: main
+    provider: github
+
+  - project: CHECKOUT
+    # Fallback for any CHECKOUT ticket without a specific component match
+    repo: https://github.com/acme/checkout-service
+    branch: main
+    provider: github
+
+  # ── Example: monorepo setup ────────────────────────────────────────────
+  - project: PLATFORM
+    component: auth
+    repo: https://github.com/acme/platform-monorepo
+    branch: main
+    path: services/auth
+    provider: github
+
+  - project: PLATFORM
+    component: notifications
+    repo: https://github.com/acme/platform-monorepo
+    branch: main
+    path: services/notifications
+    provider: github
+
+  - project: PLATFORM
+    repo: https://github.com/acme/platform-monorepo
+    branch: main
+    provider: github
+
+  # ── Example: GitLab with auth ──────────────────────────────────────────
+  - project: INFRA
+    repo: https://gitlab.com/acme/infrastructure
+    branch: main
+    provider: gitlab
+    auth_secret_arn: arn:aws:secretsmanager:us-east-1:123456789012:secret:gitlab-token
+
+  # ── Example: Bitbucket ─────────────────────────────────────────────────
+  - project: DATAENG
+    repo: https://bitbucket.org/acme/data-pipelines
+    branch: main
+    provider: bitbucket
+    auth_secret_arn: arn:aws:secretsmanager:us-east-1:123456789012:secret:bitbucket-token
+
+  # ── Test: Resolution Test App (Bitbucket) ──────────────────────────────
+  - project: ARP
+    repo: https://bitbucket.org/your-workspace/resolution-test-app.git
+    branch: main
+    provider: bitbucket
+    auth_secret_arn: arn:aws:secretsmanager:us-east-1:123456789012:secret:agentic-pipeline/repo-credentials
+
+  # ── IoT Fleet Management (Bitbucket) ──────────────────────────────────
+  - project: IOT
+    repo: https://bitbucket.org/your-workspace/iot-fleet-management.git
+    branch: main
+    provider: bitbucket
+    auth_secret_arn: arn:aws:secretsmanager:us-east-1:123456789012:secret:agentic-pipeline/repo-credentials
+
+  # ── Example: AWS CodeCommit ────────────────────────────────────────────
+  - project: INTERNAL
+    repo: https://git-codecommit.us-east-1.amazonaws.com/v1/repos/internal-tools
+    branch: main
+    provider: codecommit
+
+# ── Defaults ───────────────────────────────────────────────────────────────
+# Applied when a mapping entry doesn't specify a value.
+# The "repo" default is used as a last-resort fallback when no mapping matches.
+defaults:
+  branch: main
+  provider: github
+  # repo: https://github.com/acme/default-repo  # Uncomment for a catch-all

@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "create_issue",
+    "arguments": {
+      "project_key": "OPS",
+      "issue_type": "Task",
+      "summary": "Follow-up: add retry to checkout client",
+      "description": "Created by DevOps Agent during incident inc-2026-06-18-a3f9. AWS key AKIAIOSFODNN7EXAMPLE was in the original log line and should be redacted by the MCP."
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "add_comment",
+    "arguments": {
+      "issue_key": "OPS-100",
+      "body": "PR opened: https://bitbucket.example/PR/123\nAgent diagnosis: cart-svc connection pool exhausted; raising max-conns from 20 to 100. Email contact: oncall@example.com"
+    }
+  }
+}

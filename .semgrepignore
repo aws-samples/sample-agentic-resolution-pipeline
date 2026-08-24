@@ -1,0 +1,3 @@
+# Sample app frontend — demo UI, not production code
+# Excludes i18n, generic-api-key (chart color hex codes), and CSRF (internal service) findings
+sample-app/iot-fleet-management/frontend/src/

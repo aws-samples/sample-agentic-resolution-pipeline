@@ -1,0 +1,46 @@
+%%{ init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#232F3E', 'primaryTextColor': '#fff', 'lineColor': '#FF9900' } } }%%
+sequenceDiagram
+    autonumber
+    participant Agent as DevOps Agent
+    participant APIGW as API Gateway<br/>(SigV4 Auth)
+    participant Server as MCP Server<br/>(Lambda)
+    participant CB as Circuit Breaker
+    participant Cache as Metadata Cache<br/>(DynamoDB)
+    participant Jira as Jira Cloud<br/>(REST v3)
+    participant Audit as CloudWatch<br/>Audit Log
+
+    Note over Agent, Jira: READ PATH — e.g. get_transitions (with metadata cache)
+
+    Agent->>+APIGW: POST /prod/mcp (SigV4 signed)<br/>{"method":"tools/call","params":{"name":"get_transitions",...}}
+    APIGW->>APIGW: Verify IAM SigV4 signature
+    APIGW->>+Server: Invoke Lambda
+
+    %% Circuit breaker
+    Server->>CB: is_open()?
+    CB-->>Server: false
+
+    %% No idempotency check for reads
+    Note over Server: Reads skip idempotency<br/>(GETs are inherently idempotent)
+
+    %% Metadata cache lookup
+    Server->>+Cache: get_or_load("transitions:KAN", loader_fn)
+    Cache->>Cache: DynamoDB get_item("transitions:KAN")
+
+    alt Cache HIT (within 1h TTL)
+        Cache-->>Server: Cached transitions list
+        Note right of Cache: ~10ms faster<br/>No Jira call
+    else Cache MISS
+        Cache->>+Jira: GET /rest/api/3/issue/KAN-1/transitions
+        Jira-->>-Cache: {transitions: [...]}
+        Cache->>Cache: DynamoDB put_item<br/>(TTL: 3600s)
+        Cache-->>-Server: Fresh transitions list
+    end
+
+    %% Circuit breaker success
+    Server->>CB: record_success()
+
+    %% Audit
+    Server->>Audit: [AUDIT] {"event":"tool_ok","tool":"get_transitions",...}
+
+    Server-->>-APIGW: {"jsonrpc":"2.0","result":{"content":[{type:"text",...}]}}
+    APIGW-->>-Agent: 200 OK

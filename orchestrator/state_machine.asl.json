@@ -1,0 +1,331 @@
+{
+  "Comment": "Agentic Resolution Pipeline — Orchestrator. Classifies, dispatches investigation, waits for RCA, gets human approval, then routes to resolution.",
+  "StartAt": "Classify",
+  "States": {
+    "Classify": {
+      "Type": "Task",
+      "Resource": "${ClassifyFunctionArn}",
+      "ResultPath": "$",
+      "Next": "RouteByCategory"
+    },
+    "RouteByCategory": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.classification.category",
+          "StringEquals": "NOISE",
+          "Next": "HandleNoise"
+        },
+        {
+          "Variable": "$.classification.category",
+          "StringEquals": "DATA_QUALITY",
+          "Next": "DataQualityApproval"
+        },
+        {
+          "Variable": "$.classification.category",
+          "StringEquals": "FEATURE_REQUEST",
+          "Next": "FeatureRequestPlaceholder"
+        },
+        {
+          "Variable": "$.classification.category",
+          "StringEquals": "PROD_INCIDENT",
+          "Next": "DispatchInvestigation"
+        },
+        {
+          "Variable": "$.classification.category",
+          "StringEquals": "BUG_TICKET",
+          "Next": "DispatchInvestigation"
+        }
+      ],
+      "Default": "HandleNoise"
+    },
+    "HandleNoise": {
+      "Type": "Task",
+      "Resource": "${NoiseFunctionArn}",
+      "ResultPath": "$.noise_result",
+      "End": true
+    },
+    "DataQualityApproval": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${StoreTokenAndNotifyFunctionArn}",
+        "Payload": {
+          "issue_key.$": "$.classification.issue_key",
+          "stage": "data_quality_approval",
+          "task_token.$": "$$.Task.Token",
+          "event.$": "$.event",
+          "classification.$": "$.classification",
+          "notification_subject": "DATA_QUALITY ticket requires approval before investigation"
+        }
+      },
+      "ResultSelector": {
+        "approved_by.$": "$.approved_by",
+        "approved_at.$": "$.approved_at"
+      },
+      "ResultPath": "$.data_quality_approval",
+      "TimeoutSeconds": 86400,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.approval_error",
+          "Next": "ApprovalTimedOut"
+        }
+      ],
+      "Next": "DispatchInvestigation"
+    },
+    "ApprovalTimedOut": {
+      "Type": "Pass",
+      "Result": {
+        "action": "timed_out",
+        "note": "Human approval not received within 24h"
+      },
+      "ResultPath": "$.timeout_result",
+      "End": true
+    },
+    "DispatchInvestigation": {
+      "Type": "Task",
+      "Resource": "${DispatchFunctionArn}",
+      "ResultPath": "$.dispatch_result",
+      "Next": "WaitForRCA"
+    },
+    "WaitForRCA": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${StoreTokenAndNotifyFunctionArn}",
+        "Payload": {
+          "issue_key.$": "$.classification.issue_key",
+          "stage": "awaiting_rca",
+          "task_token.$": "$$.Task.Token",
+          "event.$": "$.event",
+          "classification.$": "$.classification"
+        }
+      },
+      "ResultSelector": {
+        "rca_summary.$": "$.rca_summary",
+        "rca_detected_at.$": "$.rca_detected_at"
+      },
+      "ResultPath": "$.rca_result",
+      "TimeoutSeconds": 7200,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.rca_timeout",
+          "Next": "InvestigationTimedOut"
+        }
+      ],
+      "Next": "NotifyResolutionReady"
+    },
+    "InvestigationTimedOut": {
+      "Type": "Pass",
+      "Result": {
+        "action": "timed_out",
+        "note": "DevOps Agent did not post RCA within 2h"
+      },
+      "ResultPath": "$.timeout_result",
+      "End": true
+    },
+    "NotifyResolutionReady": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${StoreTokenAndNotifyFunctionArn}",
+        "Payload": {
+          "issue_key.$": "$.classification.issue_key",
+          "stage": "awaiting_resolution_approval",
+          "task_token.$": "$$.Task.Token",
+          "event.$": "$.event",
+          "classification.$": "$.classification",
+          "rca_result.$": "$.rca_result",
+          "notification_subject": "RCA complete — approve Resolution Agent to proceed"
+        }
+      },
+      "ResultSelector": {
+        "approved_by.$": "$.approved_by",
+        "approved_at.$": "$.approved_at"
+      },
+      "ResultPath": "$.resolution_approval",
+      "TimeoutSeconds": 86400,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.approval_error",
+          "Next": "ResolutionApprovalTimedOut"
+        }
+      ],
+      "Next": "PlanResolution"
+    },
+    "ResolutionApprovalTimedOut": {
+      "Type": "Pass",
+      "Result": {
+        "action": "timed_out",
+        "note": "Resolution approval not received within 24h"
+      },
+      "ResultPath": "$.timeout_result",
+      "End": true
+    },
+    "PlanResolution": {
+      "Type": "Task",
+      "Resource": "${ResolutionPlannerFunctionArn}",
+      "Comment": "AgentCore Planner: KB query + repo resolution + repo browsing + prompt building",
+      "ResultSelector": {
+        "kb_context.$": "$.kb_context",
+        "repo_url.$": "$.repo_info.repo_url",
+        "default_branch.$": "$.repo_info.default_branch",
+        "provider.$": "$.repo_info.provider",
+        "auth_secret_arn.$": "$.repo_info.auth_secret_arn",
+        "enriched_prompt.$": "$.enriched_prompt",
+        "strategy.$": "$.strategy",
+        "agent_trace.$": "$.agent_trace"
+      },
+      "ResultPath": "$.plan",
+      "TimeoutSeconds": 600,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.TaskFailed", "States.Timeout"],
+          "ResultPath": "$.plan_error",
+          "Next": "PlanResolutionFallback"
+        }
+      ],
+      "Next": "PostPlanForReview"
+    },
+    "PostPlanForReview": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Comment": "Posts plan as Jira comment and waits for /approve-plan command",
+      "Parameters": {
+        "FunctionName": "${PostPlanFunctionArn}",
+        "Payload": {
+          "issue_key.$": "$.classification.issue_key",
+          "stage": "awaiting_plan_approval",
+          "task_token.$": "$$.Task.Token",
+          "plan.$": "$.plan",
+          "classification.$": "$.classification",
+          "rca_result.$": "$.rca_result"
+        }
+      },
+      "ResultSelector": {
+        "approved_by.$": "$.approved_by",
+        "approved_at.$": "$.approved_at"
+      },
+      "ResultPath": "$.plan_approval",
+      "TimeoutSeconds": 86400,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.plan_approval_error",
+          "Next": "PlanApprovalTimedOut"
+        }
+      ],
+      "Next": "RunResolutionTask"
+    },
+    "PlanApprovalTimedOut": {
+      "Type": "Pass",
+      "Result": {
+        "action": "timed_out",
+        "note": "Plan approval not received within 24h"
+      },
+      "ResultPath": "$.timeout_result",
+      "End": true
+    },
+    "PlanResolutionFallback": {
+      "Type": "Task",
+      "Resource": "${KBRetrievalFunctionArn}",
+      "Comment": "Fallback: direct KB retrieval if planner agent fails",
+      "ResultPath": "$.kb_lookup",
+      "Next": "FallbackResolveRepo"
+    },
+    "FallbackResolveRepo": {
+      "Type": "Task",
+      "Resource": "${ResolveRepoFunctionArn}",
+      "ResultPath": "$.repo_info",
+      "Next": "AssembleFallbackPlan"
+    },
+    "AssembleFallbackPlan": {
+      "Type": "Pass",
+      "Comment": "Map fallback KB+repo results into $.plan format expected by RunResolutionTask",
+      "Parameters": {
+        "kb_context.$": "$.kb_lookup.kb_context",
+        "repo_url.$": "$.repo_info.repo_url",
+        "default_branch.$": "$.repo_info.default_branch",
+        "provider.$": "$.repo_info.provider",
+        "auth_secret_arn.$": "$.repo_info.auth_secret_arn",
+        "strategy": "Apply targeted fix based on RCA",
+        "enriched_prompt": "",
+        "agent_trace": ["fallback: planner agent failed"]
+      },
+      "ResultPath": "$.plan",
+      "Next": "PostPlanForReview"
+    },
+    "RunResolutionTask": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Comment": "Async callback — dispatcher stores token, worker does the fix and calls back",
+      "Parameters": {
+        "FunctionName": "${ResolutionDispatcherFunctionArn}",
+        "Payload": {
+          "issue_key.$": "$.classification.issue_key",
+          "stage": "awaiting_resolution",
+          "task_token.$": "$$.Task.Token",
+          "plan.$": "$.plan",
+          "classification.$": "$.classification",
+          "rca_result.$": "$.rca_result"
+        }
+      },
+      "ResultSelector": {
+        "pr_url.$": "$.pr_url",
+        "status.$": "$.status",
+        "issue_key.$": "$.issue_key",
+        "session_id.$": "$.session_id"
+      },
+      "ResultPath": "$.resolution_result",
+      "TimeoutSeconds": 3600,
+      "HeartbeatSeconds": 600,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.TaskFailed", "States.Timeout", "States.HeartbeatTimeout"],
+          "ResultPath": "$.resolution_error",
+          "Next": "ResolutionFailed"
+        }
+      ],
+      "Next": "PostResolution"
+    },
+    "PostResolution": {
+      "Type": "Task",
+      "Resource": "${PostResolutionFunctionArn}",
+      "Parameters": {
+        "issue_key.$": "$.classification.issue_key",
+        "output_bucket": "${ResolutionOutputBucket}",
+        "output_key.$": "States.Format('resolutions/{}/output.json', $.classification.issue_key)",
+        "event.$": "$.event",
+        "classification.$": "$.classification"
+      },
+      "ResultPath": "$.post_resolution",
+      "End": true
+    },
+    "ResolutionFailed": {
+      "Type": "Task",
+      "Resource": "${PostResolutionFunctionArn}",
+      "Parameters": {
+        "issue_key.$": "$.classification.issue_key",
+        "failed": true,
+        "error.$": "$.resolution_error",
+        "event.$": "$.event",
+        "classification.$": "$.classification"
+      },
+      "ResultPath": "$.post_resolution",
+      "End": true
+    },
+    "FeatureRequestPlaceholder": {
+      "Type": "Pass",
+      "Comment": "Feature requests skip investigation — set empty RCA context and proceed to resolution",
+      "Result": {
+        "rca_summary": "Feature request — no root cause analysis needed. Implement the requested feature as described in the ticket.",
+        "rca_detected_at": "N/A"
+      },
+      "ResultPath": "$.rca_result",
+      "Next": "PlanResolution"
+    }
+  }
+}

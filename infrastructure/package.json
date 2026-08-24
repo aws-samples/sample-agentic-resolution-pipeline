@@ -1,0 +1,7 @@
+{
+  "name": "agentic-pipeline-infrastructure",
+  "private": true,
+  "dependencies": {
+    "aws-cdk": "2.1130.0"
+  }
+}

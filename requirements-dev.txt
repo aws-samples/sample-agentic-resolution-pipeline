@@ -1,0 +1,4 @@
+-r infrastructure/requirements.txt
+-r intake/jira/requirements.txt
+pytest
+pyyaml

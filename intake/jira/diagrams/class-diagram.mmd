@@ -1,0 +1,216 @@
+%%{ init: { 'theme': 'base', 'themeVariables': { 'primaryColor': '#232F3E', 'primaryTextColor': '#fff', 'lineColor': '#FF9900', 'secondaryColor': '#F2F3F3' } } }%%
+classDiagram
+    direction TB
+
+    %% ─── MCP Server (server.py) ───────────────────────────────────────────
+    class MCPServer {
+        +lambda_handler(event, context) dict
+        +handle_mcp_request(body, idempotency_key, actor) dict|None
+        -_dispatch(tool_name, args, idempotency_key, actor) dict
+        -_emit_audit(event) void
+        -_summarize(result) dict
+        -_text_to_adf(text) dict
+        -_new_session_id() str
+        -_empty_response(status, session_id, body) dict
+    }
+
+    %% ─── Circuit Breaker ──────────────────────────────────────────────────
+    class CircuitBreaker {
+        -fail_threshold: int
+        -reset_after_s: int
+        -failure_count: int
+        -opened_at: float|None
+        +is_open() bool
+        +record_success() void
+        +record_failure() void
+    }
+
+    %% ─── Tool Handlers ───────────────────────────────────────────────────
+    class ToolRegistry {
+        <<registry>>
+        +TOOLS: dict~name → ToolDef~
+        +t_search_issues_jql(args) dict
+        +t_get_issue(args) dict
+        +t_get_issue_comments(args) dict
+        +t_get_issue_changelog(args) dict
+        +t_get_transitions(args) dict
+        +t_get_project_metadata(args) dict
+        +t_get_attachments(args) dict
+        +t_get_user(args) dict
+        +t_create_issue(args) dict
+        +t_update_issue(args) dict
+        +t_transition_issue(args) dict
+        +t_add_comment(args) dict
+        +t_add_attachment(args) dict
+        +t_link_issues(args) dict
+        +t_bulk_transition(args) dict
+        +t_bulk_update(args) dict
+    }
+
+    %% ─── Policy Engine (policy_engine.py) ─────────────────────────────────
+    class PolicyEngine {
+        -POLICY_PATH: str
+        -HIGH_PRIORITIES: set
+        -TERMINAL_TRANSITION_NAMES: set
+        -_policy_cache: dict|None
+        -_load() dict
+        -_resolve(project_key) ProjectPolicy
+        +check_field_writes(project_key, fields) void
+        +check_transition(project_key, transition_name, current_priority, comment_provided) void
+        +check_bulk_limit(project_key, count) void
+    }
+
+    class ProjectPolicy {
+        +allowed_fields: set~str~
+        +forbidden_fields: set~str~
+        +allowed_transitions: set~str~
+        +forbidden_transitions: set~str~
+        +rules: dict
+    }
+
+    class PolicyDenied {
+        +reason: str
+    }
+
+    %% ─── Redaction (redaction.py) ─────────────────────────────────────────
+    class Redaction {
+        -PATTERNS: list~tuple(label, regex)~
+        +redact_text(text) str
+        +redact_adf(adf) dict|None
+        +redact_filename(name) str
+        -_walk(node) Any
+    }
+
+    %% ─── Idempotency (idempotency.py) ────────────────────────────────────
+    class Idempotency {
+        -IDEMPOTENCY_TABLE: str
+        -IDEMPOTENCY_TTL_SECONDS: int
+        -_table: DynamoDB.Table
+        +lookup(idempotency_key) dict|None
+        +record(idempotency_key, response) void
+    }
+
+    %% ─── Metadata Cache (metadata_cache.py) ──────────────────────────────
+    class MetadataCache {
+        -CACHE_TABLE: str
+        -CACHE_TTL_SECONDS: int
+        -_table: DynamoDB.Table
+        +get_or_load(cache_key, loader) Any
+        +invalidate(cache_key) void
+    }
+
+    %% ─── Jira Client (jira_client.py) ────────────────────────────────────
+    class JiraClient {
+        -JIRA_BASE_URL: str
+        -JIRA_SECRET_ARN: str
+        -HTTP_TIMEOUT_S: float
+        -MAX_RETRIES: int
+        -DRY_RUN: bool
+        -_credentials_cache: dict|None
+        -_load_credentials() dict
+        -_auth_header() str
+        -_request(method, path, params, json_body, files) Any
+        -_dry_run_response(operation, **detail) dict
+        +search_issues_jql(jql, fields, ...) dict
+        +get_issue(issue_key, fields, expand) dict
+        +get_issue_comments(issue_key, ...) dict
+        +get_issue_changelog(issue_key, ...) dict
+        +get_transitions(issue_key) dict
+        +get_project_metadata(project_key) dict
+        +get_attachments(issue_key) list
+        +get_user(query) list
+        +create_issue(project_key, ...) dict
+        +update_issue(issue_key, fields) dict|None
+        +transition_issue(issue_key, ...) dict|None
+        +add_comment(issue_key, body_adf) dict
+        +add_attachment(issue_key, ...) list|dict
+        +link_issues(inward_key, outward_key, link_type) dict|None
+        +bulk_update(issue_keys, fields) list
+        +bulk_transition(issue_keys, transition_id) list
+    }
+
+    class JiraError {
+        +status_code: int
+        +body: Any
+    }
+
+    %% ─── Webhook Receiver (webhook_receiver.py) ──────────────────────────
+    class WebhookReceiver {
+        -JIRA_WEBHOOK_SECRET_ARN: str
+        -AGENT_WEBHOOK_URL: str
+        -AGENT_WEBHOOK_SECRET_ARN: str
+        -AGENT_DLQ_URL: str
+        -DEDUPE_TABLE: str
+        -WEBHOOK_FILTER: str
+        -JIRA_AGENT_ACCOUNT_IDS: set
+        -AGENT_COMMENT_MARKER: str
+        +lambda_handler(event, context) dict
+        -_verify_hmac(headers, raw_body) bool
+        -_filter_match(event) bool
+        -_is_agent_authored(payload) bool
+        -_normalize(payload) dict|None
+        -_is_duplicate(event) bool
+        -_forward(event) tuple
+        -_send_to_dlq(event, reason) void
+        -_audit(record) void
+    }
+
+    %% ─── External Systems ────────────────────────────────────────────────
+    class JiraCloud {
+        <<external>>
+        REST API v3
+    }
+
+    class DynamoDB {
+        <<external>>
+        IdempotencyTable
+        MetadataCacheTable
+        DedupeTable
+    }
+
+    class SecretsManager {
+        <<external>>
+        JiraSecret
+        WebhookSecret
+        AgentSecret
+    }
+
+    class DevOpsAgent {
+        <<external>>
+        Event Channel Webhook
+    }
+
+    class APIGateway {
+        <<external>>
+        /prod/mcp (SigV4)
+        /prod/webhook (HMAC)
+    }
+
+    %% ─── Relationships ───────────────────────────────────────────────────
+    MCPServer --> CircuitBreaker : checks before dispatch
+    MCPServer --> ToolRegistry : dispatches tool calls
+    MCPServer --> Idempotency : lookup/record on writes
+    MCPServer --> PolicyEngine : raises PolicyDenied
+
+    ToolRegistry --> PolicyEngine : check_field_writes\ncheck_transition\ncheck_bulk_limit
+    ToolRegistry --> Redaction : redact_text/redact_adf
+    ToolRegistry --> JiraClient : API calls
+    ToolRegistry --> MetadataCache : get_or_load (transitions, project meta)
+
+    PolicyEngine --> ProjectPolicy : resolves per project
+    PolicyEngine ..> PolicyDenied : throws
+
+    JiraClient --> JiraCloud : REST API v3 (Basic auth)
+    JiraClient --> SecretsManager : load credentials
+    JiraClient ..> JiraError : throws
+
+    Idempotency --> DynamoDB : get_item / put_item
+    MetadataCache --> DynamoDB : get_item / put_item
+    WebhookReceiver --> DynamoDB : dedupe check
+
+    WebhookReceiver --> SecretsManager : load HMAC secrets
+    WebhookReceiver --> DevOpsAgent : HMAC-signed POST
+
+    APIGateway --> MCPServer : POST /mcp (SigV4 verified)
+    APIGateway --> WebhookReceiver : POST /webhook
+    JiraCloud --> APIGateway : webhook events
